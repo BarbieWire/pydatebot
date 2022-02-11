@@ -1,33 +1,43 @@
 # DatingBot❤️
 Telegram dating bot written on python/aiogram
-- Using postgresql as database
+1. Using postgresql as database
+2. Heroku as deployment service for application
+
+> ### ___P.S Heroku was used to deploy both of them___
+> - database and application 
+
+# Usage:
+*Worker: main.py*
+- Download side-packages from requirements.txt
+- Rename ___example.env___ to ___.env___
+- Change all global variables in ___.env___ file
 
 # SQL tables structure
-
-**Table "likes"**
-```sql
-CREATE TABLE IF NOT EXISTS public.likes
-(
-    id integer NOT NULL DEFAULT nextval('likes_id_seq'::regclass),
-    liker character varying COLLATE pg_catalog."default",
-    liked character varying COLLATE pg_catalog."default",
-    mutual character varying(255) COLLATE pg_catalog."default",
-    CONSTRAINT likes_pkey PRIMARY KEY (id)
-)
-```
 **Table "users"**
+> place for storing personal data of users
 ```sql
-CREATE TABLE IF NOT EXISTS public.users
-(
+CREATE TABLE users (
     chat_id integer NOT NULL,
-    photo character varying COLLATE pg_catalog."default",
-    city character varying COLLATE pg_catalog."default",
-    gender character varying COLLATE pg_catalog."default",
-    name character varying COLLATE pg_catalog."default",
-    preference character varying COLLATE pg_catalog."default",
-    about character varying COLLATE pg_catalog."default",
+    photo character varying,
+    city character varying,
+    gender character varying,
+    name character varying,
+    preference character varying,
+    about character varying,
     age integer,
-    active character varying COLLATE pg_catalog."default",
+    active character varying,
     CONSTRAINT users_pkey PRIMARY KEY (chat_id)
 )
 ```
+**Table "likes"**
+> centralized table of likes
+```sql
+CREATE TABLE likes (
+    id integer NOT NULL,
+    liker character varying(30),
+    liked character varying(30),
+    mutual character varying(30),
+    CONSTRAINT likes_pkey PRIMARY KEY (id)
+)
+```
+### __Don't forget to repo's support author with your star⭐__
