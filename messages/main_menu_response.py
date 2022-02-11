@@ -62,10 +62,12 @@ async def show_profile(message: Message):
         search_forms = _base.search(params[0], params[2], params[7], params[5], params[3])
         like_forms = _base.liked(chat_id)
         likes = []
+
         for i in like_forms:
             likes.append(_base.get_user(i))
         mutual_forms = _base.get_mutual(chat_id)
         mutual = []
+
         for i in mutual_forms:
             mutual.append(_base.get_user(i))
 
@@ -81,49 +83,57 @@ async def forming(user, chat_id, reply_markup=SEARCH_MENU):
 
 
 async def search(message: Message, state: FSMContext):
-        user = await _storage.get_user(chat_id=message.from_user.id)
-        if message.text == "Back to main menu 🔙":
-            await state.finish()
-            await message.answer(text="Turning you back", reply_markup=MAIN_MENU)
+    user = await _storage.get_user(chat_id=message.from_user.id)
+    if user == {}:
+        await message.answer(text="Fill your form before entering a search tab", reply_markup=MAIN_MENU)
 
-        elif message.text in ["like", "dislike"]:
-            if message.text == "like":
-                if user["likes"] != []:
-                    _base.set_mutual(liker=user["likes"][0][0], liked=message.from_user.id)
-                    await bot.send_message(chat_id=user["likes"][0][0], reply_markup=LIKE_MENU,
-                                           text="Someone is interested in you...")
+    if message.text == "Back to main menu 🔙":
+        await state.finish()
+        await message.answer(text="Turning you back", reply_markup=MAIN_MENU)
 
-                    await message.answer(text=f"Mutual sympathy, link ---> [{user['likes'][0][4]}](tg://user?id={user['likes'][0][0]})", parse_mode="Markdown")
-                    await forming(user=user["likes"][0], chat_id=message.from_user.id, reply_markup=None)
-                    await _storage.delete_position(chat_id=message.from_user.id, dictionary="likes")
-                else:
-                    _base.like(liker=message.from_user.id, liked=user["forms"][0][0])
-                    await bot.send_message(chat_id=user["forms"][0][0], reply_markup=LIKE_MENU,
-                                           text="Someone is interested in you...")
-                    await _storage.delete_position(chat_id=message.from_user.id, dictionary="forms")
+    elif message.text in ["like", "dislike"]:
+        if message.text == "like":
+            if user["likes"] != []:
+                _base.set_mutual(liker=user["likes"][0][0], liked=message.from_user.id)
+                await bot.send_message(chat_id=user["likes"][0][0], reply_markup=LIKE_MENU,
+                                       text="Someone is interested in you...")
+
+                await message.answer(text=f"Mutual sympathy, link ---> [{user['likes'][0][4]}](tg://user?id={user['likes'][0][0]})", parse_mode="Markdown")
+                await forming(user=user["likes"][0], chat_id=message.from_user.id, reply_markup=None)
+                await _storage.delete_position(chat_id=message.from_user.id, dictionary="likes")
+                await message.answer("No more mutual sympathies\nMoving forward")
             else:
+                _base.like(liker=message.from_user.id, liked=user["forms"][0][0])
+                await bot.send_message(chat_id=user["forms"][0][0], reply_markup=LIKE_MENU,
+                                       text="Someone is interested in you...")
                 await _storage.delete_position(chat_id=message.from_user.id, dictionary="forms")
+        else:
+            await _storage.delete_position(chat_id=message.from_user.id, dictionary="forms")
 
-            try:
-                if user["likes"] != []:
-                    await message.answer(text="Your form liked by:")
-                    await forming(user["likes"][0], chat_id=message.from_user.id)
-                else:
-                    await forming(user["forms"][0], chat_id=message.from_user.id)
-            except Exception as _ex:
-                await message.answer("Unfortunately here's no one... Come back later", reply_markup=MAIN_MENU)
-                await state.finish()
-
-        elif message.text in ["Who's this?", "Ok"]:
+        try:
             if user["likes"] != []:
                 await message.answer(text="Your form liked by:")
-                await forming(user["likes"][0], message.from_user.id)
-            elif user["likes"] == [] and user["mutual"] != []:
-                for i in user["mutual"]:
-                    await message.answer(text=f"Mutual sympathy, link ---> [{i[4]}](tg://user?id={user['mutual'][0][0]})", parse_mode="Markdown")
-                    await forming(user=i, chat_id=message.from_user.id)
-                    _base.delete_sympathy(liked=message.from_user.id, liker=i[0])
-                await forming(user["forms"][0], message.from_user.id)
+                await forming(user["likes"][0], chat_id=message.from_user.id)
+            else:
+                await forming(user["forms"][0], chat_id=message.from_user.id)
+        except Exception as _ex:
+            await message.answer("Unfortunately here's no one... Come back later", reply_markup=MAIN_MENU)
+            await state.finish()
+
+    elif message.text in ["Who's this?", "Ok"]:
+        if user["likes"] != []:
+            await message.answer(text="Your form liked by:")
+            await forming(user["likes"][0], message.from_user.id)
+        elif user["likes"] == [] and user["mutual"] != []:
+            for i in user["mutual"]:
+                await message.answer(text=f"Mutual sympathy, link ---> [{i[4]}](tg://user?id={user['mutual'][0][0]})", parse_mode="Markdown")
+                await forming(user=i, chat_id=message.from_user.id)
+                _base.delete_sympathy(liked=message.from_user.id, liker=i[0])
+            await message.answer("No more mutual sympathies\nMoving forward")
+            await forming(user["forms"][0], message.from_user.id)
+        else:
+            if user["forms"] == []:
+                await message.answer("Unfortunately here's no one... Come back later", reply_markup=MAIN_MENU)
             else:
                 await forming(user["forms"][0], message.from_user.id)
 
